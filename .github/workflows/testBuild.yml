@@ -25,6 +25,7 @@ jobs:
         cd ..
         rm -Rf moodleapp-4.5.0
         rm v4.5.0.zip
+        cp resources/android/icon-foreground.png resources/android/icon-background.png
         
    
         
