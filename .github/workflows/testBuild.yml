@@ -60,7 +60,7 @@ jobs:
            
     - name: build apk          
       run: |
-           npx ionic cordova build android --release -- -- --packageType=apk
+           npx ionic cordova build android -- -- --packageType=apk
       
         
     - name: Upload Artifact
