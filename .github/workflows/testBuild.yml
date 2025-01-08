@@ -1,26 +1,15 @@
 
-name: BuildSSSVV
+name: BuildwithoutCustomizations
 
 on: workflow_dispatch
 
 jobs:
 
   clonekeybuild:
-    name: Clone private repo and build
+    name: Download zip & build
     runs-on: ubuntu-latest
     steps:
-    - name: Setup SSH
-      uses: MrSquaare/ssh-setup-action@v3
-      with:
-          host: github.com
-          private-key: ${{ secrets.HLAPTOP_PRIVATE_KEY }}
-          
-    - name: Clone key repository
-      run: |
-        git clone git@github.com:SriSathyaSaiVidyaVahini/LMSAppKey.git
-        cd LMSAppKey
-        pwd
-        cp -v sssvv_mobile-release-key.keystore ~
+    
         
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
@@ -37,11 +26,7 @@ jobs:
         rm -Rf moodleapp-4.5.0
         rm v4.5.0.zip
         
-    - name: get customizations
-      run: |
-        git clone git@github.com:hn-88/customizedMoodleApp4changes.git
-        cp -rv customizedMoodleApp4changes/* .
-        rm -Rf customizedMoodleApp4changes
+   
         
     - name: Install npm packages
       run: |
@@ -74,10 +59,8 @@ jobs:
            
     - name: build apk          
       run: |
-           npx ionic cordova build android --release -- -- --packageType=apk --keystore="~/sssvv_mobile-release-key.keystore" --password=$KEY_PW --storePassword=$KEY_PW --alias=$KEY_ALIAS
-      env:          
-        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-        KEY_PW: ${{ secrets.KEY_PW }}
+           npx ionic cordova build android --release -- -- --packageType=apk
+      
         
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
