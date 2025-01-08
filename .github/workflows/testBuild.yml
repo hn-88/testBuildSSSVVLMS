@@ -1,0 +1,86 @@
+
+name: BuildSSSVV
+
+on: workflow_dispatch
+
+jobs:
+
+  clonekeybuild:
+    name: Clone private repo and build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Setup SSH
+      uses: MrSquaare/ssh-setup-action@v3
+      with:
+          host: github.com
+          private-key: ${{ secrets.HLAPTOP_PRIVATE_KEY }}
+          
+    - name: Clone key repository
+      run: |
+        git clone git@github.com:SriSathyaSaiVidyaVahini/LMSAppKey.git
+        cd LMSAppKey
+        pwd
+        cp -v sssvv_mobile-release-key.keystore ~
+        
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: get moodleapp code for a particular release
+      run: |
+        wget https://github.com/moodlehq/moodleapp/archive/refs/tags/v4.5.0.zip
+        unzip v4.5.0.zip
+        cd moodleapp-4.5.0
+        cp -r * ..
+        cd ..
+        rm -Rf moodleapp-4.5.0
+        rm v4.5.0.zip
+        
+    - name: get customizations
+      run: |
+        git clone git@github.com:hn-88/customizedMoodleApp4changes.git
+        cp -rv customizedMoodleApp4changes/* .
+        rm -Rf customizedMoodleApp4changes
+        
+    - name: Install npm packages
+      run: |
+        npm install 
+        npm ci --no-audit --prefix cordova-plugin-moodleapp
+      
+    - name: build prod
+      run: |
+           npm run build:prod
+           echo "Completed npm run build:prod."
+    - name: give run permissions
+      run: |
+        chmod -R +x ./*
+        echo "chmod +x for all."
+        
+    - name: npm run prod --prefix cordova-plugin-moodleapp
+      run: |       
+        npm run prod --prefix cordova-plugin-moodleapp
+        
+    - name: cordova res and platform add
+      run: |
+           npm i -g cordova-res
+           npm install
+           npx ionic cordova platform add android
+           cordova-res android --skip-config --copy
+           cp -Rvf android platforms/android 
+           npx cordova platform remove ios
+           npx cordova prepare
+           npx gulp
+           
+    - name: build apk          
+      run: |
+           npx ionic cordova build android --release -- -- --packageType=apk --keystore="~/sssvv_mobile-release-key.keystore" --password=$KEY_PW --storePassword=$KEY_PW --alias=$KEY_ALIAS
+      env:          
+        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        KEY_PW: ${{ secrets.KEY_PW }}
+        
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: artifact-of-build
+        path: platforms/android/app/build/outputs/
